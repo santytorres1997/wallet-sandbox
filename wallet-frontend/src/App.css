@@ -274,3 +274,18 @@ body {
     font-size: 1.3rem;
   }
 }
+
+.toggle-mode-btn {
+  margin-top: 14px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #93c5fd;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: 0.2s ease;
+}
+
+.toggle-mode-btn:hover {
+  color: #bfdbfe;
+}

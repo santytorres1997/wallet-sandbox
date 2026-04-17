@@ -3,6 +3,9 @@ import api from './services/api';
 import './App.css';
 
 function App() {
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -16,8 +19,50 @@ function App() {
   const [transactions, setTransactions] = useState([]);
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    if (!name || !email || !password) {
+      setMessage('Completá nombre, email y contraseña');
+      setMessageType('error');
+      return;
+    }
+
+    if (password.length < 6) {
+      setMessage('La contraseña debe tener al menos 6 caracteres');
+      setMessageType('error');
+      return;
+    }
+
+    try {
+      setIsRegistering(true);
+      setMessage('');
+      setMessageType('');
+
+      const response = await api.post('/auth/register', {
+        name,
+        email,
+        password,
+      });
+
+      setMessage(response.data.message || 'Usuario registrado correctamente');
+      setMessageType('success');
+
+      setName('');
+      setPassword('');
+      setIsRegisterMode(false);
+    } catch (error) {
+      console.log(error);
+      setMessage(error.response?.data?.message || 'Error al registrarse');
+      setMessageType('error');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -57,6 +102,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUserData(null);
+    setName('');
     setEmail('');
     setPassword('');
     setToEmail('');
@@ -64,6 +110,7 @@ function App() {
     setTransactions([]);
     setMessage('');
     setMessageType('');
+    setIsRegisterMode(false);
   };
 
   const handleTransfer = async (e) => {
@@ -147,27 +194,71 @@ function App() {
         {!userData ? (
           <>
             <h1>Wallet Sandbox</h1>
-            <p className="subtitle">Iniciar sesión</p>
+            <p className="subtitle">
+              {isRegisterMode ? 'Crear cuenta' : 'Iniciar sesión'}
+            </p>
 
-            <form onSubmit={handleLogin} className="form">
-              <input
-                type="email"
-                placeholder="Ingresá tu email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+            {isRegisterMode ? (
+              <form onSubmit={handleRegister} className="form">
+                <input
+                  type="text"
+                  placeholder="Ingresá tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
 
-              <input
-                type="password"
-                placeholder="Ingresá tu contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+                <input
+                  type="email"
+                  placeholder="Ingresá tu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
 
-              <button type="submit" disabled={isLoggingIn}>
-                {isLoggingIn ? 'Ingresando...' : 'Ingresar'}
-              </button>
-            </form>
+                <input
+                  type="password"
+                  placeholder="Creá una contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+
+                <button type="submit" disabled={isRegistering}>
+                  {isRegistering ? 'Registrando...' : 'Crear cuenta'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleLogin} className="form">
+                <input
+                  type="email"
+                  placeholder="Ingresá tu email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+
+                <input
+                  type="password"
+                  placeholder="Ingresá tu contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+
+                <button type="submit" disabled={isLoggingIn}>
+                  {isLoggingIn ? 'Ingresando...' : 'Ingresar'}
+                </button>
+              </form>
+            )}
+
+            <button
+              className="toggle-mode-btn"
+              onClick={() => {
+                setIsRegisterMode(!isRegisterMode);
+                setMessage('');
+                setMessageType('');
+              }}
+            >
+              {isRegisterMode
+                ? '¿Ya tenés cuenta? Iniciá sesión'
+                : '¿No tenés cuenta? Registrate'}
+            </button>
 
             {message && (
               <p className={`message ${messageType}`}>
