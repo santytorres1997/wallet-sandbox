@@ -17,6 +17,7 @@ function App() {
   const [toEmail, setToEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [transactions, setTransactions] = useState([]);
+  const [showTransactions, setShowTransactions] = useState(false);
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -108,6 +109,7 @@ function App() {
     setToEmail('');
     setAmount('');
     setTransactions([]);
+    setShowTransactions(false);
     setMessage('');
     setMessageType('');
     setIsRegisterMode(false);
@@ -150,8 +152,10 @@ function App() {
       const meResponse = await api.get('/account/me');
       setUserData(meResponse.data);
 
-      const txResponse = await api.get('/account/transactions');
-      setTransactions(txResponse.data.transactions);
+      if (showTransactions) {
+        const txResponse = await api.get('/account/transactions');
+        setTransactions(txResponse.data.transactions);
+      }
 
       setToEmail('');
       setAmount('');
@@ -205,6 +209,7 @@ function App() {
                   placeholder="Ingresá tu nombre"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={isRegistering}
                 />
 
                 <input
@@ -212,6 +217,7 @@ function App() {
                   placeholder="Ingresá tu email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isRegistering}
                 />
 
                 <input
@@ -219,6 +225,7 @@ function App() {
                   placeholder="Creá una contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isRegistering}
                 />
 
                 <button type="submit" disabled={isRegistering}>
@@ -232,6 +239,7 @@ function App() {
                   placeholder="Ingresá tu email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoggingIn}
                 />
 
                 <input
@@ -239,6 +247,7 @@ function App() {
                   placeholder="Ingresá tu contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoggingIn}
                 />
 
                 <button type="submit" disabled={isLoggingIn}>
@@ -260,11 +269,7 @@ function App() {
                 : '¿No tenés cuenta? Registrate'}
             </button>
 
-            {message && (
-              <p className={`message ${messageType}`}>
-                {message}
-              </p>
-            )}
+            {message && <div className={`alert ${messageType}`}>{message}</div>}
           </>
         ) : (
           <>
@@ -284,6 +289,7 @@ function App() {
                 placeholder="Email destino"
                 value={toEmail}
                 onChange={(e) => setToEmail(e.target.value)}
+                disabled={isTransferring}
               />
 
               <input
@@ -291,22 +297,32 @@ function App() {
                 placeholder="Monto"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                disabled={isTransferring}
               />
 
               <button type="submit" disabled={isTransferring}>
-                {isTransferring ? 'Procesando...' : 'Transferir'}
+                {isTransferring ? 'Procesando transferencia...' : 'Transferir'}
               </button>
             </form>
 
             <button
-              onClick={loadTransactions}
+              onClick={() => {
+                if (!showTransactions) {
+                  loadTransactions();
+                }
+                setShowTransactions(!showTransactions);
+              }}
               className="secondary-btn"
               disabled={loadingTransactions}
             >
-              {loadingTransactions ? 'Cargando...' : 'Ver movimientos'}
+              {loadingTransactions
+                ? 'Cargando...'
+                : showTransactions
+                ? 'Ocultar movimientos'
+                : 'Ver movimientos'}
             </button>
 
-            {transactions.length > 0 && (
+            {showTransactions && transactions.length > 0 && (
               <div className="transactions-box">
                 <h3>Historial</h3>
 
@@ -353,15 +369,18 @@ function App() {
               </div>
             )}
 
+            {showTransactions && transactions.length === 0 && !loadingTransactions && (
+              <div className="transactions-box">
+                <h3>Historial</h3>
+                <p>No hay movimientos todavía.</p>
+              </div>
+            )}
+
             <button onClick={handleLogout} className="logout-btn">
               Cerrar sesión
             </button>
 
-            {message && (
-              <p className={`message ${messageType}`}>
-                {message}
-              </p>
-            )}
+            {message && <div className={`alert ${messageType}`}>{message}</div>}
           </>
         )}
       </div>
